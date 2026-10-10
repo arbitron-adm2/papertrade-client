@@ -1,0 +1,318 @@
+{
+  "target": "papertrade.xyz",
+  "base_url": "https://exchange.papertrade.xyz",
+  "captured": "2026-10-10",
+  "auth_tier": "0 (reads) / 5 (writes: self-derived EIP-712)",
+  "chain_id": 999,
+  "chain_name": "HyperEVM Mainnet",
+  "contracts": {
+    "exchange":           "0x6cd5661646289fb6e65ea5c032310fded797d0a2",
+    "paper_token":        "0xe40f17915daa230324030003a197cdaef2261c0e",
+    "paper_staking":      "0xaad6c7b0cc3014fc80ffedae0ed7ce5967b0f016",
+    "deposit_proxy_factory": "0x1629b7d46bef6e13ff754174fc9f32dea309b38f",
+    "collateral":         "0x6b9e773128f453f5c2c60935ee2de2cbc5390a24"
+  },
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/query/ready",
+      "params": [],
+      "purpose": "Health check — exchange is operational",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"status": "string"}
+    },
+    {
+      "method": "GET",
+      "path": "/query/protocol/summary",
+      "params": [],
+      "purpose": "Protocol TVL, activity, fees",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"ok": "bool", "source": "object", "balances": "object", "activity": "object", "fees": "object"}
+    },
+    {
+      "method": "GET",
+      "path": "/query/protocol/history",
+      "params": [{"name": "interval", "type": "string", "required": true, "values": ["1h","1d","1w","all"]}],
+      "purpose": "Protocol time-series: TVL, volume, PnL, liquidations, users",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"startMs": "number", "intervalMs": "number", "columns": "array", "source": "object", "totals": "object"}
+    },
+    {
+      "method": "GET",
+      "path": "/query/protocol/trades/recent",
+      "params": [],
+      "purpose": "Most recent trades across all accounts",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"ok": "bool", "count": "number", "events": "array"}
+    },
+    {
+      "method": "GET",
+      "path": "/query/protocol/paper/activity",
+      "params": [],
+      "purpose": "PAPER token staking and distribution activity",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"items": "array", "latestDistribution": "object"}
+    },
+    {
+      "method": "GET",
+      "path": "/query/protocol/queue-summary",
+      "params": [],
+      "purpose": "Global deposit queue summary",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"ok": "bool", "source": "object", "total": "string", "count": "number", "largest": "string"}
+    },
+    {
+      "method": "GET",
+      "path": "/query/notices",
+      "params": [],
+      "purpose": "System announcements and notices",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"notices": "array"}
+    },
+    {
+      "method": "GET",
+      "path": "/query/markets/{instrument_id}/liquidation-map",
+      "params": [{"name": "range", "type": "string", "required": true, "values": ["0.1","0.25","0.5","1","2","5","10","25"]}],
+      "purpose": "Open-interest per price bucket (±range% around current price), 150 buckets",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"ok": "bool", "instrumentId": "number", "range": "string", "fromRaw": "string", "toRaw": "string", "priceScale": "string", "source": "object", "buckets": "array[4]", "below": "array[4]", "above": "array[4]"}
+    },
+    {
+      "method": "GET",
+      "path": "/state/trading",
+      "params": [],
+      "purpose": "Live global trading parameters, instruments, minimum sizes, intake actions",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"schemaVersion": "number", "indexedThroughBlock": "number", "tradingPaused": "bool", "minimumTradeSizeRaw": "string", "minimumOpenNotionalRaw": "string", "accRewardPerShareRaw": "string", "instruments": "array", "intake": "array"}
+    },
+    {
+      "method": "GET",
+      "path": "/state/protocol/position-topology",
+      "params": [],
+      "purpose": "96×64 heatmap grid of all open positions",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"ok": "bool", "count": "number", "nExt": "number", "pExt": "number", "computedAtMs": "number", "grid": "array[uint8 6144]"}
+    },
+    {
+      "method": "GET",
+      "path": "/state/house/current",
+      "params": [],
+      "purpose": "Protocol reserve (house) current state",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"ok": "bool", "revision": "string", "historyRevision": "string", "historyGeneration": "string", "sourceAsOfMs": "number", "head": "object"}
+    },
+    {
+      "method": "GET",
+      "path": "/state/house/delta",
+      "params": [{"name": "coin", "type": "string", "required": true, "values": ["BTC","ETH"]}],
+      "purpose": "Protocol reserve delta (change) for a specific coin",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"ok": "bool", "revision": "string", "sourceAsOfMs": "number", "delta": "object"}
+    },
+    {
+      "method": "GET",
+      "path": "/query/accounts/{address}/funding",
+      "params": [],
+      "purpose": "Deposit and withdrawal transfer history for an address",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"items": "array[FundingTransfer]", "coreAccount": "bool"}
+    },
+    {
+      "method": "GET",
+      "path": "/query/accounts/{address}/trades",
+      "params": [{"name": "cursor", "type": "string", "required": false}],
+      "purpose": "Paginated trade history for an address",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"items": "array", "nextCursor": "string|null"}
+    },
+    {
+      "method": "GET",
+      "path": "/query/accounts/{address}/queue-ring",
+      "params": [],
+      "purpose": "Account's position and neighbours in the deposit queue ring",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"ok": "bool", "source": "object", "total": "string", "count": "number", "account": "object", "truncated": "bool", "entries": "array"}
+    },
+    {
+      "method": "GET",
+      "path": "/query/accounts/{address}/queue-balances",
+      "params": [
+        {"name": "limit", "type": "integer", "required": false, "default": 75},
+        {"name": "cursor", "type": "string", "required": false}
+      ],
+      "purpose": "Paginated queue balance entries for an address",
+      "auth": false,
+      "confirmed": false,
+      "note": "Path confirmed from static analysis; pagination not live-tested",
+      "response_shape": {"source": "object", "nextCursor": "string|null", "entries": "array"}
+    },
+    {
+      "method": "GET",
+      "path": "/query/accounts/{address}/portfolio-history",
+      "params": [{"name": "range", "type": "string", "required": true, "values": ["24h","7d","30d","all"], "note": "only 'all' confirmed for zero address; shorter ranges need active history"}],
+      "purpose": "Portfolio P&L time-series for an address",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"fromMs": "number", "toMs": "number", "intervalMs": "number", "baseTimeMs": "number", "timeOffsetsMs": "array", "columns": "array", "gapIndices": "array", "series": "object"}
+    },
+    {
+      "method": "GET",
+      "path": "/query/accounts/{address}/leaderboard-badges",
+      "params": [],
+      "purpose": "Leaderboard badges and achievements for an address",
+      "auth": false,
+      "confirmed": true,
+      "response_shape": {"ok": "bool", "badges": "array", "total": "number"}
+    },
+    {
+      "method": "GET",
+      "path": "/state/leaderboard/accounts/{address}",
+      "params": [
+        {"name": "window", "type": "string", "required": true, "values": ["24h","7d","30d","all"]},
+        {"name": "page",    "type": "integer", "required": false, "default": 0},
+        {"name": "sortKey", "type": "string",  "required": false, "default": "totalWindowedPnl", "values": ["rank","address","lastActiveTs","totalWindowedPnl","realizedPnl","currentUnrealizedPnl","currentBalance","currentQueued","currentOpenNotional","totalVolume","paperTotal","currentOpenPositionCount"]},
+        {"name": "sortDir", "type": "string",  "required": false, "default": "desc", "values": ["asc","desc"]},
+        {"name": "q",       "type": "string",  "required": false, "default": ""}
+      ],
+      "purpose": "Global leaderboard; selfRow contains own rank if address is registered",
+      "auth": false,
+      "confirmed": false,
+      "note": "Returns 400 for unregistered addresses; endpoint confirmed in static analysis",
+      "response_shape": {"ok": "bool", "rows": "array[LeaderboardRow]", "selfRow": "LeaderboardRow|null", "pageInfo": "object"}
+    },
+    {
+      "method": "POST",
+      "path": "/intents",
+      "params": [],
+      "purpose": "Submit a signed EIP-712 intent (trading, funding, or staking action)",
+      "auth": true,
+      "auth_detail": "Body must contain 'action' and 'signed' fields; 'signed' is the EIP-712 payload with r/s/v",
+      "confirmed": false,
+      "note": "Tested dry-run only (EIP-712 signing verified locally, not submitted to real server without funded account)",
+      "actions": {
+        "registerSessionKey": {"domain": "exchange", "signer": "main_wallet", "types": ["RegisterSessionKey"]},
+        "openPosition":       {"domain": "exchange", "signer": "session_key",  "types": ["OpenPosition"]},
+        "closePositions":     {"domain": "exchange", "signer": "session_key",  "types": ["Close"]},
+        "withdrawToCore":     {"domain": "exchange", "signer": "main_wallet",  "types": ["WithdrawToCore"]},
+        "paperStake":         {"domain": "paperStaking", "signer": "main_wallet", "types": ["Stake"]},
+        "paperUnstake":       {"domain": "paperStaking", "signer": "main_wallet", "types": ["Unstake"]},
+        "paperClaim":         {"domain": "paperStaking", "signer": "main_wallet", "types": ["Claim"]}
+      },
+      "response_shape": {"intentId": "bytes32", "action": "string", "queueRevision": "string"}
+    },
+    {
+      "method": "POST",
+      "path": "/intents/{id}/cancel",
+      "params": [],
+      "purpose": "Cancel a queued intent by ID",
+      "auth": true,
+      "auth_detail": "Body: CancelIntent EIP-712 fields (user, intentId, deadline, r, s, v) using cancellation domain",
+      "confirmed": false,
+      "note": "Tested dry-run only",
+      "response_shape": {"ok": "bool"}
+    },
+    {
+      "method": "POST",
+      "path": "/intents/{id}/onward",
+      "params": [],
+      "purpose": "Route an approved withdrawal to destination chain (called after withdrawToCore is confirmed)",
+      "auth": true,
+      "confirmed": false,
+      "note": "Body varies by withdrawal route (hypercore/hyperevm/ethereum/arbitrum/solana); not tested",
+      "response_shape": {}
+    },
+    {
+      "method": "POST",
+      "path": "/funding/deposits/check",
+      "params": [],
+      "purpose": "Compute the deposit proxy address for a user (cross-chain deposit routing)",
+      "auth": false,
+      "confirmed": false,
+      "note": "Found in static analysis (execution bundle); not live-probed",
+      "request_body": {"user": "0x<address>"},
+      "response_shape": {"proxy": "0x<address>"}
+    }
+  ],
+  "eip712_domains": {
+    "exchange": {
+      "name": "String",
+      "version": "1",
+      "chainId": 999,
+      "verifyingContract": "0x6cd5661646289fb6e65ea5c032310fded797d0a2",
+      "used_for": ["RegisterSessionKey","OpenPosition","Close","WithdrawToCore"]
+    },
+    "paperStaking": {
+      "name": "PaperStaking",
+      "version": "1",
+      "chainId": 999,
+      "verifyingContract": "0xaad6c7b0cc3014fc80ffedae0ed7ce5967b0f016",
+      "used_for": ["Stake","Unstake","Claim"]
+    },
+    "cancellation": {
+      "name": "PaperTrade Intent Cancel",
+      "version": "2",
+      "chainId": 999,
+      "verifyingContract": "0x6cd5661646289fb6e65ea5c032310fded797d0a2",
+      "used_for": ["CancelIntent"]
+    }
+  },
+  "websocket": {
+    "url": "wss://stream.papertrade.xyz/connection/websocket",
+    "protocol": "Centrifuge (SockJS fallback via /emulation)",
+    "confirmed": false,
+    "note": "WebSocket capture aspirational — not end-to-end validated in this run per skill disclaimer",
+    "channels": ["trading:current","trading_authorization","trading-state","activity","wallet","pressure (per-subscription, delta:fossil)"]
+  },
+  "external_apis": {
+    "hyperliquid_info": {
+      "url": "https://api.hyperliquid.xyz/info",
+      "purpose": "HyperCore account state, spot balances, ledger updates",
+      "method": "POST",
+      "confirmed": true,
+      "note": "Used for deposit flow; type=userNonFundingLedgerUpdates confirmed in bundles"
+    },
+    "hyperliquid_exchange": {
+      "url": "https://api.hyperliquid.xyz/exchange",
+      "purpose": "Submit signed HyperCore actions (funding transfers to HyperCore)",
+      "method": "POST",
+      "confirmed": false
+    },
+    "across_bridge": {
+      "url": "https://app.across.to/api/suggested-fees",
+      "purpose": "Cross-chain bridge fee quotes for deposits",
+      "method": "GET",
+      "confirmed": false
+    },
+    "circle_iris": {
+      "url": "https://iris-api.circle.com/deposit/status",
+      "purpose": "Circle CCTP cross-chain transfer status",
+      "method": "GET",
+      "confirmed": false
+    }
+  },
+  "missing_or_unconfirmed": [
+    "Leaderboard pagination returns 400 for unregistered addresses — needs a real registered account to confirm row data",
+    "WebSocket streaming not end-to-end tested (aspirational per skill disclaimer)",
+    "/intents write endpoints tested in dry-run (EIP-712 signing confirmed correct locally, not submitted without funded account)",
+    "portfolio-history ranges 24h/7d/30d return 400 for zero address — need an address with active trading history",
+    "/query/accounts/{address}/queue-balances confirmed from static analysis but not live-probed",
+    "Mobile UI endpoints (/mobile/*) not cataloged — separate surface",
+    "/funding/deposits/check not live-probed",
+    "Withdrawal onward routing (/intents/{id}/onward) body shape varies by chain — exact payload not confirmed"
+  ]
+}
