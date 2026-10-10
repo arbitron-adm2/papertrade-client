@@ -293,8 +293,50 @@ def cmd_leaderboard(address, window, page, sort_key, sort_dir, query):
     with _build_client() as c:
         _out(c.read.leaderboard(address, window, page, sort_key, sort_dir, query))
 
+@cli.command("relayer-health")
+def cmd_relayer_health():
+    """Relayer intake service health check."""
+    with _build_client() as c:
+        _out(c.read.relayer_health())
 
-# ══════════════════════ WALLET COMMANDS ═══════════════════════════════
+
+@cli.command("market-stats")
+def cmd_market_stats():
+    """24h market volume across BTC (0) and ETH (1)."""
+    with _build_client() as c:
+        _out(c.read.market_stats())
+
+
+@cli.command("house-history")
+@click.option("--interval", default="1h",
+              type=click.Choice(["1m", "1h", "1d"]), show_default=True)
+def cmd_house_history(interval):
+    """Protocol reserve (house) history time-series."""
+    with _build_client() as c:
+        _out(c.read.house_history(interval))
+
+
+@cli.command("leaderboard-positions")
+@click.option("--window", default="24h",
+              type=click.Choice(["24h", "7d", "30d", "all"]), show_default=True)
+def cmd_leaderboard_positions(window):
+    """Top open/recent positions ranked on the leaderboard."""
+    with _build_client() as c:
+        _out(c.read.leaderboard_positions(window))
+
+
+@cli.command("price-history")
+@click.option("--instrument", default="BTC",
+              type=click.Choice(["BTC", "ETH"]), show_default=True)
+@click.option("--from-ms", default=1791646500000, type=int, show_default=True)
+@click.option("--to-ms", default=1791646560000, type=int, show_default=True)
+@click.option("--interval-ms", default=125, type=int, show_default=True)
+def cmd_price_history(instrument, from_ms, to_ms, interval_ms):
+    """Granular price candle history for an instrument."""
+    from papertrade.constants import INSTRUMENT_BY_NAME
+    iid = INSTRUMENT_BY_NAME[instrument]
+    with _build_client() as c:
+        _out(c.read.market_price_history(iid, from_ms, to_ms, interval_ms))
 
 @cli.command("wallet-new")
 @click.option("--output", "-o", default="wallet.json", show_default=True,

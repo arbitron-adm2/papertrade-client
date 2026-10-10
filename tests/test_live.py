@@ -453,3 +453,63 @@ def test_write_open_position_live(authed_client):
     )
     assert "intentId" in result or result.get("ok") is not False
     print(f"\n  ✓ open_position LIVE: {result}")
+
+
+# ── ⑩ New endpoints found via live CDP capture ────────────────────────
+
+def test_relayer_health(client):
+    """GET /relayer/health"""
+    resp = client.read.relayer_health()
+    assert resp.get("ok") is True
+    assert resp.get("service") == "relayer-intake"
+    assert "databaseReady" in resp
+    assert "pricesReady" in resp
+    print(f"\n  ✓ relayer_health: ready={resp.get('ready')}, db={resp.get('databaseReady')}, prices={resp.get('pricesReady')}")
+
+
+def test_root_ready(client):
+    """GET /ready (root health, different from /query/ready)"""
+    resp = client.read.ready()
+    assert resp.get("status") in ("ok", "ready")
+    print(f"\n  ✓ /ready: {resp}")
+
+
+def test_market_stats(client):
+    """GET /query/protocol/market-stats"""
+    resp = client.read.market_stats()
+    assert resp.get("ok") is True
+    markets = resp.get("markets", {})
+    assert "0" in markets and "1" in markets   # BTC, ETH
+    btc_vol = int(markets["0"]["volume_24h"]) / 10**18
+    eth_vol = int(markets["1"]["volume_24h"]) / 10**18
+    print(f"\n  ✓ market_stats: BTC 24h vol=${btc_vol:.0f}, ETH 24h vol=${eth_vol:.0f}")
+
+
+def test_house_history(client):
+    """GET /query/house/history?interval=1h"""
+    resp = client.read.house_history("1h")
+    assert "columns" in resp or "intervalMs" in resp
+    print(f"\n  ✓ house_history(1h): keys={list(resp.keys())[:5]}")
+
+
+def test_leaderboard_positions(client):
+    """GET /state/leaderboard/positions?window=24h"""
+    resp = client.read.leaderboard_positions("24h")
+    assert resp.get("ok") is True
+    rows = resp.get("rows", [])
+    assert isinstance(rows, list)
+    if rows:
+        r0 = rows[0]
+        assert "address" in r0 and "instrument" in r0
+        print(f"\n  ✓ leaderboard_positions: {len(rows)} entries, top: {r0['instrument']} {r0.get('side')} {r0.get('leverage')}x")
+    else:
+        print(f"\n  ✓ leaderboard_positions: empty (no positions)")
+
+
+def test_market_price_history(client):
+    """GET /query/markets/0/price-history with canonical order and 125ms interval"""
+    from_ms = 1791646500000
+    to_ms   = 1791646560000
+    resp = client.read.market_price_history(0, from_ms, to_ms, interval_ms=125)
+    assert "fromMs" in resp and "columns" in resp
+    print(f"\n  ✓ market_price_history: keys={list(resp.keys())[:5]}")

@@ -278,3 +278,86 @@ class PaperTradeReader:
                 "q":       query,
             },
         )
+
+    # ── NEW: Endpoints found via live browser CDP capture ─────────────
+
+    def relayer_health(self) -> dict:
+        """
+        GET /relayer/health
+
+        Returns the relayer (intake) service health.
+        Confirmed live (CDP capture): HTTP 200
+        {"service":"relayer-intake","databaseReady":bool,"pricesReady":bool,"ok":bool,"ready":bool}
+        """
+        return self._t.get("/relayer/health")
+
+    def ready(self) -> dict:
+        """
+        GET /ready
+
+        Root health check (different from /query/ready).
+        Confirmed live (CDP capture): HTTP 200 {"status":"ready"}
+        """
+        return self._t.get("/ready")
+
+    def market_stats(self) -> dict:
+        """
+        GET /query/protocol/market-stats
+
+        Returns 24h volume for each instrument (BTC=0, ETH=1).
+        Confirmed live (CDP capture): HTTP 200
+        {"ok":bool,"markets":{"0":{"volume_24h":"..."},"1":{"volume_24h":"..."}}}
+        """
+        return self._t.get("/query/protocol/market-stats")
+
+    def house_history(self, interval: str = "1h") -> dict:
+        """
+        GET /query/house/history?interval={interval}
+
+        Returns protocol reserve (house) history time-series.
+        interval: "1m", "1h", "1d"  (5m/15m return 400)
+        Confirmed live (CDP capture): HTTP 200
+        {"intervalMs","baseTimeMs","timeOffsetsMs","gapIndices","columns","source"}
+        """
+        if interval not in ("1m", "1h", "1d"):
+            raise ValueError("interval must be one of: 1m, 1h, 1d")
+        return self._t.get("/query/house/history", params={"interval": interval})
+
+    def market_price_history(
+        self,
+        instrument_id: int,
+        from_ms: int,
+        to_ms: int,
+        interval_ms: int = 125,
+    ) -> dict:
+        """
+        GET /query/markets/{instrument_id}/price-history
+
+        Returns OHLC price history for a given time range.
+        instrument_id: 0=BTC, 1=ETH
+        from_ms / to_ms: Unix timestamp in milliseconds
+        interval_ms: candle width in ms (default 125 = 8 candles/second for live)
+        Confirmed live (CDP capture): HTTP 200 {"fromMs","toMs","intervalMs","baseTimeMs","timeOffsetsMs",...}
+        """
+        params = [
+            ("fromMs", str(from_ms)),
+            ("intervalMs", str(interval_ms)),
+            ("toMs", str(to_ms)),
+        ]
+        return self._t.get(
+            f"/query/markets/{instrument_id}/price-history",
+            params=params,
+        )
+
+    def leaderboard_positions(self, window: str = "24h") -> dict:
+        """
+        GET /state/leaderboard/positions?window={window}
+
+        Returns the top open/recent positions on the leaderboard.
+        window: "24h","7d","30d","all"
+        Confirmed live (CDP capture): HTTP 200
+        {"ok":bool,"rows":[{rank,address,instrument,side,leverage,margin,entryPrice,pnl,...}]}
+        """
+        if window not in ("24h", "7d", "30d", "all"):
+            raise ValueError("window must be one of: 24h, 7d, 30d, all")
+        return self._t.get("/state/leaderboard/positions", params={"window": window})
